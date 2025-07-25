@@ -1,5 +1,4 @@
-from .num_utils import DECIMAL_POINT, str_to_num, num_to_base, num_to_digit_char
-from .operators import OPS_DICT
+from .operators import BINARY_OPS
 from .tokenizer import Token, TokenTypes, SyntaxError
 
 
@@ -21,13 +20,13 @@ def display_tree(node: Node | None, indent: str = "  ") -> None:
             return
         elif node.right is None:
             print(indent + "└──", end="")
-            display_tree(node.left, indent + "    ")
+            display_tree(node.left, indent + "     ")
             return
         else:
             print(indent + "├──", end="")
-            display_tree(node.left, indent + "│   ")
+            display_tree(node.left, indent + "│    ")
             print(indent + "└──", end="")
-            display_tree(node.right, indent + "    ")
+            display_tree(node.right, indent + "     ")
             return
 
 
@@ -69,9 +68,13 @@ def _parse(tokens: list[Token], start: int = 0, prec: int = 0) -> tuple[Node, in
             root.right = node
         elif token.type == TokenTypes.CLOSE_BRACKET:
             return root, ind + 1
-        elif token.type == TokenTypes.OPERATOR:
+        elif token.type == TokenTypes.POSTFIX_UNARY_OP:
             op_node = Node(token)
-            cur_prec = OPS_DICT[token.value].precedence
+            op_node.left = root
+            root = op_node
+        elif token.type == TokenTypes.BINARY_OP:
+            op_node = Node(token)
+            cur_prec = BINARY_OPS[token.value].precedence
             if prev_prec == 0:
                 op_node.left = root
                 root = op_node
@@ -87,38 +90,3 @@ def _parse(tokens: list[Token], start: int = 0, prec: int = 0) -> tuple[Node, in
         ind += 1
 
     return root, ind
-
-
-def evaluate_tree(root: Node | None, base: int) -> str:
-    """Evaluate the binary expression tree."""
-    result = _evaluate_tree(root, base)
-    print("Raw result:", result)
-    # Convert the result (float) to the given base as a string
-    if base == 10:
-        return str(result)
-    else:
-        print("Converting result to base", base)
-        int_digits, frac_digits = num_to_base(result, base)
-        int_part = "".join(num_to_digit_char(digit, base) for digit in int_digits)
-        if frac_digits:
-            frac_part = "".join(num_to_digit_char(digit, base) for digit in frac_digits)
-        else:
-            frac_part = "0"  # Ensure at least one digit after decimal
-    return f"{int_part}{DECIMAL_POINT}{frac_part}"
-
-
-def _evaluate_tree(root: Node | None, base: int) -> float:
-    if root is None:
-        raise ValueError("Cannot evaluate an empty tree.")
-    if root.token is None:
-        raise ValueError("Cannot evaluate a node without a token.")
-    elif root.token.type == TokenTypes.NUMBER:
-        return str_to_num(root.token.value, base)
-    elif root.token.type == TokenTypes.OPERATOR:
-        val_left = _evaluate_tree(root.left, base)
-        val_right = _evaluate_tree(root.right, base)
-        func = OPS_DICT[root.token.value].function
-        if func is None:
-            raise ValueError(f"No function defined for operator {root.token.value}.")
-        else:
-            return func(val_left, val_right)

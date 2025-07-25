@@ -1,4 +1,5 @@
 import argparse
+import logging
 
 from .pyeval import AlgebraEval
 from .tokenizer import SyntaxError
@@ -30,6 +31,15 @@ def init_parser() -> argparse.ArgumentParser:
 
 
 def main() -> None:
+    logging.basicConfig(
+        format="{asctime}: {levelname} - {name} - {message}",
+        style="{",
+        datefmt="%Y-%m-%d %H:%M:%S",
+        filename="./pypratt.log",
+        filemode="w",  # Overwrite the log file each time
+        level=logging.INFO,
+    )
+
     parser = init_parser()
     args = parser.parse_args()
 
@@ -50,12 +60,12 @@ def main() -> None:
 
     algebra_eval = AlgebraEval(base=args.base)
     while True:
-        expr = input("> ")
+        expr = input("> ").strip()
         if not expr.strip():
             print("Ciao!")
             break
 
-        if expr.strip() == "#":
+        if expr[0] == "#":
             args.v = not args.v
             print(f"Verbose mode {'enabled' if args.v else 'disabled'}.")
             continue
@@ -65,12 +75,12 @@ def main() -> None:
             print(result)
             if args.v:
                 print()
-                algebra_eval.display()
+                print(algebra_eval.get_parse_tree())
                 print()
-        # except ValueError as e:
-        #     print(f"Value error in expression: {e}")
+        except ValueError as e:
+            print(f"{e}")
         except SyntaxError as e:
-            print(f"Syntax error in expression: {e}")
+            print(f"Syntax error: {e}")
 
 
 main()

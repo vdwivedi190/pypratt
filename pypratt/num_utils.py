@@ -37,12 +37,29 @@ def num_to_digit_char(num: int, base: int) -> str:
         return chr(ord("A") + num - 10)
 
 
-def str_to_num(expr: str, base: int = 10) -> float:
+def num_to_str(num: int | float, base: int) -> str:
+    """Convert the result (float) to the given base as a string"""
+    if base == 10:
+        return str(num)
+    else:
+        sign, int_digits, frac_digits = num_to_base(num, base)
+        sign_str = "-" if sign == -1 else ""
+        int_part_str = "".join(num_to_digit_char(digit, base) for digit in int_digits)
+        if not frac_digits:
+            return sign_str + int_part_str
+        else:
+            frac_part_str = "".join(
+                num_to_digit_char(digit, base) for digit in frac_digits
+            )
+            return sign_str + int_part_str + DECIMAL_POINT + frac_part_str
+
+
+def str_to_float(expr: str, base: int) -> float:
     """Convert a string to a number in the specified base."""
     if not str:
         raise ValueError("Empty string cannot be converted to a number.")
 
-    num = 0
+    num:float = 0.0
     decimal_flag = False
     mul_factor: float = 1
 
@@ -69,10 +86,32 @@ def str_to_num(expr: str, base: int = 10) -> float:
                 num += digit * mul_factor
             else:
                 num = num * base + digit
-    return float(num)
+    return num
 
 
-def num_to_base(num: float, base: int) -> tuple[list[int], list[int]]:
+def str_to_int(expr: str, base: int) -> float:
+    """Convert a string to a number in the specified base."""
+    if not str:
+        raise ValueError("Empty string cannot be converted to a number.")
+
+    num:int = 0
+    for char in expr:
+        if char == DECIMAL_POINT:
+            raise ValueError(
+                f"Integer expected, but encountered a decimal point."
+            )
+        elif char == SEPARATOR:
+            continue
+        else:
+            try:
+                digit = digit_char_to_num(char, base)
+            except ValueError:
+                raise
+            num = num * base + digit
+    return num
+
+
+def num_to_base(num: int | float, base: int) -> tuple[int, list[int], list[int]]:
     """Convert a number to a string representation in the specified base.
 
     Returns a tuple of two lists corresponding to the integer and fractional parts.
@@ -82,25 +121,30 @@ def num_to_base(num: float, base: int) -> tuple[list[int], list[int]]:
     if base < 2:
         raise ValueError("Base must be a positive integer greater than 1.")
 
+    int_digits = []
+    frac_digits = []
+
+    sign = 1 if num >= 0 else -1
+    num = abs(num)
+
     int_part = int(num)
     frac_part = num - int_part
 
     # Convert integer part
-    int_digits = []
     while int_part > 0:
         int_digits.append(int_part % base)
         int_part //= base
     int_digits.reverse()
 
     # Convert fractional part
-    frac_digits = []
     if frac_part > 0:
         count = 0
         while frac_part > 0 and count < MAX_DIGITS_AFTER_DECIMAL:
             digit = int(frac_part * base)
             frac_part *= base
-            frac_part, digit = divmod(frac_part, 1)
+            digit = int(frac_part)
+            frac_part -= digit
             frac_digits.append(digit)
             count += 1
 
-    return (int_digits, frac_digits)
+    return (sign, int_digits, frac_digits)
