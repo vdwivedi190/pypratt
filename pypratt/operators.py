@@ -1,3 +1,5 @@
+import math
+
 from collections.abc import Callable
 
 type unary_function = Callable[[int | float], int | float]
@@ -12,6 +14,7 @@ MATCHING_BRACKET = {
     close_bracket: OPEN_BRACKETS[i] for i, close_bracket in enumerate(CLOSE_BRACKETS)
 }
 
+OP_START_SYM = "_"
 
 class Operator:
     """Enum for binary operators used in expressions."""
@@ -46,14 +49,10 @@ POSTFIX_UNARY_OP_SYMS = {FACTORIAL_SYM}
 
 
 def factorial(num: int | float) -> int:
-    """Calculate factorial of a number."""
+    """A wrapper around math.factorial."""
     if not isinstance(num, int):
-        raise TypeError("Factorial is only defined for integers.")
-    elif num < 0:
-        raise ValueError("Factorial is not defined for negative numbers.")
-    elif num == 0 or num == 1:
-        return 1
-    return num * factorial(num - 1)
+        raise ValueError("Factorial is only defined for integers.")
+    return math.factorial(num)
 
 
 OP_FACTORIAL = Operator(
@@ -96,6 +95,32 @@ OP_MODULO = Operator(
     symbol=MODULO_SYM, name="MODULO", precedence=2, func=lambda a, b: a % b
 )
 
+def comb(a: int | float, b: int | float) -> int:
+    """A wrapper around math.comb."""
+    if not isinstance(a, int) or not isinstance(b, int):
+        raise ValueError("Combination is only defined for integers.")
+    if b < 0 or b > a:
+        raise ValueError(f"N {OP_START_SYM}C k is only defined for 0 ≤ k ≤ N.")
+    return math.comb(a, b)
+
+
+def perm(a: int | float, b: int | float) -> int:
+    """A wrapper around math.perm."""
+    if not isinstance(a, int) or not isinstance(b, int):
+        raise ValueError("Permutation is only defined for integers.")
+    if b < 0 or b > a:
+        raise ValueError(f"N {OP_START_SYM}P k is only defined for 0 ≤ k ≤ N.")
+    return math.perm(a, b)
+
+
+OP_PERMUTE = Operator(
+    symbol="P", name="PERMUTE", precedence=3, func=perm
+)
+
+OP_CHOOSE = Operator(
+    symbol="C", name="CHOOSE", precedence=3, func=comb
+)
+
 BINARY_OPS = {
     OP_ADD.symbol: OP_ADD,
     OP_SUBTRACT.symbol: OP_SUBTRACT,
@@ -103,6 +128,8 @@ BINARY_OPS = {
     OP_DIVIDE.symbol: OP_DIVIDE,
     OP_EXPONENT.symbol: OP_EXPONENT,
     OP_MODULO.symbol: OP_MODULO,
+    OP_CHOOSE.symbol: OP_CHOOSE,
+    OP_PERMUTE.symbol: OP_PERMUTE,
 }
 
 BINARY_OP_SYMS = {op.symbol for op in BINARY_OPS.values()}

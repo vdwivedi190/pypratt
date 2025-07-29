@@ -4,6 +4,10 @@ import logging
 from .pyeval import AlgebraEval
 from .tokenizer import SyntaxError
 
+CMD_CHAR = "#"
+
+algebra_eval = AlgebraEval()
+
 
 def init_parser() -> argparse.ArgumentParser:
     parser = argparse.ArgumentParser(
@@ -30,6 +34,19 @@ def init_parser() -> argparse.ArgumentParser:
     return parser
 
 
+def pre_parse(cmd:str, args) -> str:
+    match cmd:
+        case "tree":
+            args.v = True
+            return "Tree display enabled"
+        case "notree":
+            args.v = False 
+            return "Tree display disabled"
+        case _:
+            return "Invalid command!"
+
+
+
 def main() -> None:
     logging.basicConfig(
         format="{asctime}: {levelname} - {name} - {message}",
@@ -49,23 +66,25 @@ def main() -> None:
 
     print("Welcome to the Algebra Evaluator")
     print("You can enter algebraic expressions at the prompt or press enter to exit.")
-    print("The supported operators are: +, -, *, /, ^ and brackets.")
+    # print("The supported operators are: +, -, *, /, ^ and brackets.")
     if args.v:
         print(
-            "Verbose mode enabled. The parse tree will be displayed after evaluation."
+            "Parse tree display enabled."
         )
-        print("To toggle this mode, enter #.")
+
     if args.base != 10:
         print(f"Using base {args.base} for evaluation.")
+        algebra_eval.set_base(args.base)
 
-    algebra_eval = AlgebraEval(base=args.base)
+    
     while True:
         expr = input("> ").strip()
         if not expr.strip():
             print("Ciao!")
             break
 
-        if expr[0] == "#":
+        if expr[0] == CMD_CHAR:
+            msg = pre_parse(expr[1:].strip(), args)
             args.v = not args.v
             print(f"Verbose mode {'enabled' if args.v else 'disabled'}.")
             continue

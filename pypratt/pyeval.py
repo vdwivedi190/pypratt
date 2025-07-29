@@ -1,9 +1,9 @@
 import logging
 
-from .tokenizer import tokenize, TokenTypes
-from .parser import Node, parse, display_tree
-from .operators import PREFIX_UNARY_OPS, POSTFIX_UNARY_OPS, BINARY_OPS
 from .num_utils import DECIMAL_POINT, str_to_int, str_to_float, num_to_str
+from .operators import PREFIX_UNARY_OPS, POSTFIX_UNARY_OPS, BINARY_OPS
+from .parser import Node, parse, display_tree
+from .tokenizer import Token, TokenTypes, tokenize
 
 
 logger = logging.getLogger(__name__)
@@ -17,7 +17,15 @@ class AlgebraEval:
 
         self.expr = expr
         self.base = base
+        self.tokens:list[Token] = []
         self.tree_root: Node | None = None
+
+
+    def set_base(self, base: int):
+        if base < 2:
+            raise ValueError("Base must be a positive integer greater than 1.")
+        self.base = base
+
 
     def evaluate(self, expr: str = "") -> str:
         """Evaluate the algebraic expression."""

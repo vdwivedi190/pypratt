@@ -8,6 +8,7 @@ from .operators import (
     OPEN_BRACKETS,
     CLOSE_BRACKETS,
     MATCHING_BRACKET,
+    OP_START_SYM,
 )
 
 
@@ -79,15 +80,20 @@ def tokenize(expr: str, *, base: int) -> list[Token]:
     bracket_stack: list[int] = []
 
     # Add a space at the end of the expression to process the last number
-    expr = expr.replace(" ", "")
+    # expr = expr.replace(" ", "")
     expr += " "
     for str_index, char in enumerate(expr):
-        if is_num_or_var(char):
+        if is_valid_str_token(char):
             cur_str += char
         else:
             # If the previous character was part of a number, convert it to a NumberToken first
             if cur_str:
-                if is_valid_num(cur_str, base):
+                if cur_str[0] == OP_START_SYM:
+                    if cur_str[1:] in BINARY_OP_SYMS:
+                        add_operator_token(tokens, cur_str[1:], str_index)
+                    else:
+                        raise SyntaxError(f"Encountered invalid operator {cur_str}", str_index)
+                elif is_valid_num(cur_str, base):
                     tokens.append(Token(TokenTypes.NUMBER, cur_str))
                 elif is_valid_var(cur_str):
                     tokens.append(Token(TokenTypes.NUMBER, cur_str))
@@ -115,22 +121,7 @@ def tokenize(expr: str, *, base: int) -> list[Token]:
                 tokens.append(Token(TokenTypes.POSTFIX_UNARY_OP, char))
 
             elif char in BINARY_OP_SYMS:
-                if not tokens:
-                    raise SyntaxError(
-                        f"Expression cannot start with a binary operator '{char}'!",
-                        str_index,
-                    )
-                elif tokens[-1].type == TokenTypes.BINARY_OP:
-                    raise SyntaxError(
-                        f"The binary operator '{char}' cannot follow another binary operator!",
-                        str_index,
-                    )
-                elif tokens[-1].type == TokenTypes.OPEN_BRACKET:
-                    raise SyntaxError(
-                        f"The binary operator '{char}' cannot follow after an opening bracket!",
-                        str_index,
-                    )
-                tokens.append(Token(TokenTypes.BINARY_OP, char))
+                add_operator_token(tokens, char, str_index)
 
             elif char in OPEN_BRACKETS:
                 # Assume that an opening bracket preceeded by a number or a closing bracket implies multiplication
@@ -186,6 +177,25 @@ def tokenize(expr: str, *, base: int) -> list[Token]:
     return tokens
 
 
+def add_operator_token(tokens:list[Token], op:str, str_index:int):
+    if not tokens:
+        raise SyntaxError(
+                        f"Expression cannot start with a binary operator '{op}'!",
+                        str_index,
+                    )
+    elif tokens[-1].type == TokenTypes.BINARY_OP:
+        raise SyntaxError(
+                        f"The binary operator '{op}' cannot follow another binary operator!",
+                        str_index,
+                    )
+    elif tokens[-1].type == TokenTypes.OPEN_BRACKET:
+        raise SyntaxError(
+                        f"The binary operator '{op}' cannot follow after an opening bracket!",
+                        str_index,
+                    )
+    tokens.append(Token(TokenTypes.BINARY_OP, op))
+
+
 def compute_bracket_distances(tokens, opening_index):
     cur_index = len(tokens) - 1
     closing_dist = cur_index - opening_index
@@ -210,10 +220,10 @@ def is_valid_var(var_str: str) -> bool:
     return False
 
 
-def is_num_or_var(char: str) -> bool:
+def is_valid_str_token(char: str) -> bool:
     """Check if the character is part of a number.
 
     To account for numbers in different bases, we consider alphanumeric characters,
     decimal points, and separators.
     """
-    return char.isalnum() or char == DECIMAL_POINT or char == SEPARATOR
+    return char.isalnum() or char == DECIMAL_POINT or char == SEPARATOR or char == OP_START_SYM
