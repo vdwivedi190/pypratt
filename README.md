@@ -1,6 +1,6 @@
 # A simple algebraic expression evaluator and parser
 
-This package implements Pratt parsing to parse and evaluate mathematical expressions, supporting computation in arbitary bases and a variety of operators as well as parse tree visualization. It provides a class `AlgebraEval` as well as a REPL for usage from the command line. 
+This package implements a _Pratt parser_ to parse and evaluate mathematical expressions, supporting computation in arbitary bases and a variety of operators as well as parse tree visualization. It provides a class `AlgebraEval` as well as a REPL for usage from the command line. 
 
 ## Usage
 
