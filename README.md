@@ -12,7 +12,27 @@ python -m pypratt [OPTIONS]
 ```
 The allowed `OPTIONS` are
   - `-b`, `--base BASE`  : Set the numeric base (default: 10)
-  - `-v`                 : Enable parse tree display
+  - `-t`                 : Enable parse tree display
+  - `-v`                 : Enable verbose mode
+
+For example, 
+```
+vatsal@algebra>python -m pypratt -t 
+Welcome to the Algebra Evaluator
+You can enter algebraic expressions at the prompt or press enter to exit.
+Parse tree display enabled.
+>>> 1 + 2 * (3 + 4)
+1 + 2 * (3 + 4) = 15
+
+ [+]
+  ├── 1
+  └── [*]
+       ├── 2
+       └── [+]
+            ├── 3
+            └── 4
+
+```
 
 ### As a Python Module
 The class `AlgebraEval` class can be imported as:
